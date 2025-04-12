@@ -27,6 +27,11 @@ public class ThirdPersonCamera : MonoBehaviour
 
   private void Start()
   {
+    // Hide cursor
+    
+    Cursor.lockState = CursorLockMode.Locked;
+    Cursor.visible = false;
+    
     Vector3 angles = transform.eulerAngles;
     _yaw = angles.y;
     _pitch = angles.x;

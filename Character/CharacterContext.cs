@@ -12,7 +12,7 @@ public class CharacterContext : MonoBehaviour
     public Animator animator;
     public CharacterController characterController;
    
-    public CharacterStateMachine characterStateMachine;
+    public CharacterStateMachine CharacterStateMachine;
 
     [Header("Movement")] 
     public float walkSpeed = 2f;
@@ -20,14 +20,24 @@ public class CharacterContext : MonoBehaviour
     public float rotationSpeed = 10f;
     
     [Header("Lock On Settings")]
-    private float lookInputThreshold = 0.7f;
-    private float lookCoolDown = 0.4f;
-    private float lastLookTime = -1f;
+    public float lookInputThreshold = 1.2f;
+    public float lookCoolDown = 0.5f;
+    public float lastLookTime = -1f;
+    public float lookBuffer = 0f;
+    public float bufferDampSpeed = 10f;
+
+    [Header("Gravity")] 
+    public Transform groundCheck;
+    public float groundCheckRadius = 0.3f;
+    public LayerMask groundMask;
+    
+    [HideInInspector] public bool isGrounded;
+    [HideInInspector] public Vector3 velocity;
 
 
     private void Awake()
     {
-        characterStateMachine = new CharacterStateMachine();
+        CharacterStateMachine = new CharacterStateMachine();
         characterController = GetComponent<CharacterController>();
         lockOnSystem = GetComponent<LockOnSystem>();
         
@@ -41,7 +51,7 @@ public class CharacterContext : MonoBehaviour
 
     private void Start()
     {
-        characterStateMachine.Initialize(new LocomotionState(this, characterStateMachine));
+        CharacterStateMachine.Initialize(new LocomotionState(this, CharacterStateMachine));
     }
     
     private void Update()
@@ -52,21 +62,25 @@ public class CharacterContext : MonoBehaviour
             playerInputHandler.ResetLockOn();
         }
 
-        float lookX = playerInputHandler.GetComponentIndex();
+        Vector2 lookInput = playerInputHandler.LookInput;
+        lookBuffer = Mathf.Lerp(lookBuffer, lookInput.x, bufferDampSpeed * Time.deltaTime);
 
-        if (lockOnSystem.currentTarget != null && Time.time - lastLookTime < lookCoolDown)
+        if (lockOnSystem.currentTarget != null && Time.time - lastLookTime > lookCoolDown)
         {
-            if (lookX > lookInputThreshold)
+            if (lookBuffer > lookInputThreshold)
             {
                 lockOnSystem.CycleTarget(true); // to the right
                 lastLookTime = Time.time;
-            } else if (lookX < -lookInputThreshold)
+                lookBuffer = 0f;
+            } else if (lookBuffer < -lookInputThreshold)
             {
                 lockOnSystem.CycleTarget(false); // to the left
                 lastLookTime = Time.time;
+                lookBuffer = 0f;
             } 
         }
-        characterStateMachine.Update();
+        CharacterStateMachine.Update();
+        GroundCheck();
     }
     
     // Called from states to move character
@@ -115,6 +129,22 @@ public class CharacterContext : MonoBehaviour
 
     private void FixedUpdate()
     {
-        characterStateMachine.FixedUpdate();
+        CharacterStateMachine.FixedUpdate();
+    }
+
+    private void GroundCheck()
+    {
+        if (groundCheck != null)
+        {
+            isGrounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundMask);
+        }
+
+        if (isGrounded && velocity.y < 0)
+        {
+            velocity.y = -2f;
+        }
+        
+        velocity.y += Physics.gravity.y * Time.deltaTime;
+        characterController.Move(velocity * Time.deltaTime);
     }
 }
