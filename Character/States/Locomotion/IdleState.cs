@@ -4,34 +4,24 @@ using UnityEngine;
 
 public class IdleState : CharacterState
 {
-    public IdleState(CharacterContext context, CharacterStateMachine stateMachine) 
+    private LocomotionState _parent;
+    
+    public IdleState(CharacterContext context, CharacterStateMachine stateMachine, LocomotionState parent) 
         : base(context, stateMachine)
     {
+        _parent = parent;
     }
 
     public override void Enter()
     {
-        
+        Context.animator.SetFloat("Speed", 0f);
         
     }
 
     public override void LogicUpdate()
     {
         DampToIdle();
-        
-        var input = Context.playerInputHandler.MoveInput;
-        if (input != Vector2.zero)
-        {
-            if (Context.playerInputHandler.IsRunning)
-            {
-                StateMachine.ChangeState(new RunningState(Context, StateMachine));
-            }
-            else
-            {
-                StateMachine.ChangeState(new WalkingState(Context, StateMachine));
-            }
-            
-        }
+        // TODO: Implement breathing animations, turn-in-place animations
         
     }
 

@@ -1,5 +1,5 @@
 {
-    "name": "Character Controller",
+    "name": "PlayerControls",
     "maps": [
         {
             "name": "Player",
@@ -18,6 +18,24 @@
                     "name": "Run",
                     "type": "Button",
                     "id": "2829ad2d-8ca5-4302-9044-680c452bae20",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Look",
+                    "type": "Value",
+                    "id": "372233b1-7095-42f4-9f94-b6ae46f2585d",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "LockOn",
+                    "type": "Button",
+                    "id": "66ac2729-bbfd-4f71-a7f6-e77b4aa358cb",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -88,6 +106,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Run",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3dec6a6d-beb8-43ad-8131-e80183e7f01f",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Look",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "13118384-0e2b-459a-b67b-678d66505043",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LockOn",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
