@@ -129,7 +129,7 @@ public class ThirdPersonCamera : MonoBehaviour
         Quaternion lookRotation = Quaternion.LookRotation(dir);
 
         float targetYaw = lookRotation.eulerAngles.y;
-        float targetPitch = 10f; // ✅ keep pitch level & slightly angled down (natural combat angle)
+        float targetPitch = 10f; // keep pitch level & slightly angled down (natural combat angle)
 
         // Wrap yaw correctly
         if (targetYaw - yaw > 180f) targetYaw -= 360f;
