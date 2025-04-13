@@ -16,20 +16,40 @@ public class LockOnSystem : MonoBehaviour
    private List<Transform> _availableTargets = new List<Transform>();
    private int _currentTargetIndex = -1;
 
+   public List<Transform> validTargets = new List<Transform>();
+   
    private void FindTargets()
    {
       _availableTargets.Clear();
       Collider[] hits = Physics.OverlapSphere(transform.position, lockOnRange, targetMask);
+      Debug.Log($"[LockOn] Found {hits.Length} potential targets.");
+
+      Vector3 origin = transform.position + Vector3.up * 1.7f;
 
       foreach (Collider hit in hits)
       {
-         _availableTargets.Add(hit.transform);
+         Transform potential = hit.transform;
+         Vector3 targetPoint = potential.position + Vector3.up * 1f;
+         Vector3 dir = targetPoint - origin;
+         float dist = dir.magnitude;
+
+         Debug.DrawLine(origin, targetPoint, Color.yellow, 0.1f);
+
+         // Better comparison and use targetMask
+         if (Physics.Raycast(origin, dir.normalized, out RaycastHit hitInfo, dist, targetMask))
+         {
+            if (hitInfo.transform == potential)
+            {
+               Debug.Log($"[LockOn] {potential.name} is visible and added.");
+               _availableTargets.Add(potential);
+            }
+         }
       }
-      
-      _availableTargets.Sort((a,b) => 
+
+      _availableTargets.Sort((a, b) =>
          Vector3.Distance(transform.position, a.position)
             .CompareTo(Vector3.Distance(transform.position, b.position))
-         );
+      );
    } 
    
    public void ToggleLockOn()
@@ -55,19 +75,22 @@ public class LockOnSystem : MonoBehaviour
 
    public void CycleTarget(bool right)
    {
-      if (_availableTargets.Count <= 1) return;
-      
-      _currentTargetIndex += right ? 1 : -1;
+      if (validTargets.Count == 0 || currentTarget == null) return;
 
-      if (_currentTargetIndex >= _availableTargets.Count)
+      int currentIndex = validTargets.IndexOf(currentTarget);
+      if (currentIndex == -1) currentIndex = 0;
+
+      int nextIndex = right
+         ? (currentIndex + 1) % validTargets.Count
+         : (currentIndex - 1 + validTargets.Count) % validTargets.Count;
+
+      currentTarget = validTargets[nextIndex];
+      Debug.Log($"[LockOn] Switched to target: {currentTarget.name}");
+
+      if (targetIndicator != null)
       {
-         _currentTargetIndex = 0;
-      } else if (_currentTargetIndex < 0)
-      {
-         _currentTargetIndex = _availableTargets.Count - 1;
+         targetIndicator.gameObject.SetActive(true);
       }
-      
-      currentTarget = _availableTargets[_currentTargetIndex];
    }
 
    public void UnlockTarget()
@@ -81,10 +104,52 @@ public class LockOnSystem : MonoBehaviour
 
    private void Update()
    {
-      if (currentTarget != null && targetIndicator != null)
+      if (currentTarget != null)
       {
-         targetIndicator.position = currentTarget.transform.position + Vector3.up * 2f;
+         UpdateLockOnTargets();
+
+         if (targetIndicator != null)
+         {
+            targetIndicator.position = currentTarget.transform.position + Vector3.up * 2f;
+         }
       }
+   }
+
+   private void UpdateLockOnTargets()
+   {
+      validTargets.Clear();
+      Collider[] hits = Physics.OverlapSphere(transform.position, lockOnRange, targetMask);
+
+      Vector3 origin = transform.position + Vector3.up * 1.7f;
+
+      foreach (Collider hit in hits)
+      {
+         Transform potential = hit.transform;
+         Vector3 targetPoint = potential.position + Vector3.up * 1f;
+         Vector3 dir = targetPoint - origin;
+         float dist = dir.magnitude;
+
+         Debug.DrawLine(origin, targetPoint, Color.red, 0.1f);
+
+         if (Physics.Raycast(origin, dir.normalized, out RaycastHit hitInfo, dist, targetMask))
+         {
+            if (hitInfo.transform == potential)
+            {
+               validTargets.Add(potential);
+            }
+         }
+      }
+
+      validTargets.Sort((a, b) =>
+      {
+         Vector3 dirA = (a.position - transform.position).normalized;
+         Vector3 dirB = (b.position - transform.position).normalized;
+         float angleA = Vector3.Angle(transform.forward, dirA);
+         float angleB = Vector3.Angle(transform.forward, dirB);
+         return angleA.CompareTo(angleB);
+      });
+
+      Debug.Log($"[LockOn] Valid targets after LOS: {validTargets.Count}");
    }
 
    private void OnDrawGizmosSelected()
