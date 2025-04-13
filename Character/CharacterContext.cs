@@ -11,6 +11,9 @@ public class CharacterContext : MonoBehaviour
     public LockOnSystem lockOnSystem;
     public Animator animator;
     public CharacterController characterController;
+    
+    [Header("Combat Settings")]
+    public LayerMask enemyLayerMask;
    
     public CharacterStateMachine CharacterStateMachine;
 

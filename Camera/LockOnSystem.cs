@@ -1,167 +1,175 @@
-using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class LockOnSystem : MonoBehaviour
 {
-   [Header("Lock On Settings")]
-   public float lockOnRange = 15f;
-   public LayerMask targetMask;
-   public Transform targetIndicator;
-   
-   [Header("Debug")]
-   public Transform currentTarget;
-   
-   private List<Transform> _availableTargets = new List<Transform>();
-   private int _currentTargetIndex = -1;
+    [Header("Lock On Settings")]
+    public float lockOnRange = 15f;
+    public LayerMask targetMask;
+    public LayerMask obstacleMask;
+    public Transform targetIndicator;
+    public float checkInterval = 0.25f;
 
-   public List<Transform> validTargets = new List<Transform>();
-   
-   private void FindTargets()
-   {
-      _availableTargets.Clear();
-      Collider[] hits = Physics.OverlapSphere(transform.position, lockOnRange, targetMask);
-      Debug.Log($"[LockOn] Found {hits.Length} potential targets.");
+    [Header("Debug")]
+    public Transform currentTarget;
 
-      Vector3 origin = transform.position + Vector3.up * 1.7f;
+    private int _currentTargetIndex = -1;
 
-      foreach (Collider hit in hits)
-      {
-         Transform potential = hit.transform;
-         Vector3 targetPoint = potential.position + Vector3.up * 1f;
-         Vector3 dir = targetPoint - origin;
-         float dist = dir.magnitude;
+    private float _checkTimer = 0f;
 
-         Debug.DrawLine(origin, targetPoint, Color.yellow, 0.1f);
+    public List<Transform> validTargets { get; private set; } = new List<Transform>();
 
-         // Better comparison and use targetMask
-         if (Physics.Raycast(origin, dir.normalized, out RaycastHit hitInfo, dist, targetMask))
-         {
-            if (hitInfo.transform == potential)
+    private void Update()
+    {
+        if (currentTarget != null)
+        {
+            _checkTimer += Time.deltaTime;
+
+            if (_checkTimer >= checkInterval)
             {
-               Debug.Log($"[LockOn] {potential.name} is visible and added.");
-               _availableTargets.Add(potential);
+                _checkTimer = 0f;
+                if (!IsTargetValid(currentTarget))
+                {
+                    Debug.Log($"[LockOn] Auto-unlocked from {currentTarget.name}");
+                    UnlockTarget();
+                    return;
+                }
             }
-         }
-      }
 
-      _availableTargets.Sort((a, b) =>
-         Vector3.Distance(transform.position, a.position)
-            .CompareTo(Vector3.Distance(transform.position, b.position))
-      );
-   } 
-   
-   public void ToggleLockOn()
-   {
-      if (currentTarget != null)
-      {
-         UnlockTarget();
-         return;
-      }
+            RefreshValidTargets();
 
-      FindTargets();
+            if (targetIndicator != null)
+            {
+                targetIndicator.position = currentTarget.position + Vector3.up * 2f;
+            }
+        }
+    }
+    
+    private bool IsTargetValid(Transform target)
+    {
+        if (!target) return false;
 
-      if (_availableTargets.Count > 0)
-      {
-         _currentTargetIndex = 0;
-         currentTarget = _availableTargets[_currentTargetIndex];
-         if (targetIndicator != null)
-         {
+        float distance = Vector3.Distance(transform.position, target.position);
+        if (distance > lockOnRange) return false;
+
+        Vector3 origin = transform.position + Vector3.up * 1.7f;
+        Vector3 targetPoint = target.position + Vector3.up * 1f;
+        Vector3 dir = targetPoint - origin;
+        float dist = dir.magnitude;
+
+        // LOS check
+        if (Physics.Raycast(origin, dir.normalized, out RaycastHit hitInfo, dist, obstacleMask))
+        {
+            if (hitInfo.transform.root != target.root)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void ToggleLockOn()
+    {
+        if (currentTarget != null)
+        {
+            UnlockTarget();
+            return;
+        }
+
+        RefreshValidTargets();
+
+        if (validTargets.Count > 0)
+        {
+            _currentTargetIndex = 0;
+            currentTarget = validTargets[_currentTargetIndex];
+            if (targetIndicator != null)
+            {
+                targetIndicator.gameObject.SetActive(true);
+            }
+        }
+    }
+
+    public void CycleTarget(bool right)
+    {
+        if (validTargets.Count == 0 || currentTarget == null) return;
+
+        int currentIndex = validTargets.IndexOf(currentTarget);
+        if (currentIndex == -1) currentIndex = 0;
+
+        int nextIndex = right
+            ? (currentIndex + 1) % validTargets.Count
+            : (currentIndex - 1 + validTargets.Count) % validTargets.Count;
+
+        currentTarget = validTargets[nextIndex];
+
+        if (targetIndicator != null)
+        {
             targetIndicator.gameObject.SetActive(true);
-         }
-      }
-   }
+        }
+    }
 
-   public void CycleTarget(bool right)
-   {
-      if (validTargets.Count == 0 || currentTarget == null) return;
+    public void UnlockTarget()
+    {
+        currentTarget = null;
+        if (targetIndicator != null)
+        {
+            targetIndicator.gameObject.SetActive(false);
+        }
+    }
 
-      int currentIndex = validTargets.IndexOf(currentTarget);
-      if (currentIndex == -1) currentIndex = 0;
+    private void RefreshValidTargets()
+    {
+        validTargets.Clear();
+        Collider[] hits = Physics.OverlapSphere(transform.position, lockOnRange, targetMask);
 
-      int nextIndex = right
-         ? (currentIndex + 1) % validTargets.Count
-         : (currentIndex - 1 + validTargets.Count) % validTargets.Count;
+        Vector3 origin = transform.position + Vector3.up * 1.7f;
 
-      currentTarget = validTargets[nextIndex];
-      Debug.Log($"[LockOn] Switched to target: {currentTarget.name}");
+        foreach (Collider hit in hits)
+        {
+            Transform potential = hit.transform;
+            Vector3 targetPoint = potential.position + Vector3.up * 1f;
+            Vector3 dir = targetPoint - origin;
+            float dist = dir.magnitude;
 
-      if (targetIndicator != null)
-      {
-         targetIndicator.gameObject.SetActive(true);
-      }
-   }
+            Debug.DrawLine(origin, targetPoint, Color.red, 0.1f);
 
-   public void UnlockTarget()
-   {
-      currentTarget = null;
-      if (targetIndicator != null)
-      {
-         targetIndicator.gameObject.SetActive(false);
-      }
-   }
-
-   private void Update()
-   {
-      if (currentTarget != null)
-      {
-         UpdateLockOnTargets();
-
-         if (targetIndicator != null)
-         {
-            targetIndicator.position = currentTarget.transform.position + Vector3.up * 2f;
-         }
-      }
-   }
-
-   private void UpdateLockOnTargets()
-   {
-      validTargets.Clear();
-      Collider[] hits = Physics.OverlapSphere(transform.position, lockOnRange, targetMask);
-
-      Vector3 origin = transform.position + Vector3.up * 1.7f;
-
-      foreach (Collider hit in hits)
-      {
-         Transform potential = hit.transform;
-         Vector3 targetPoint = potential.position + Vector3.up * 1f;
-         Vector3 dir = targetPoint - origin;
-         float dist = dir.magnitude;
-
-         Debug.DrawLine(origin, targetPoint, Color.red, 0.1f);
-
-         if (Physics.Raycast(origin, dir.normalized, out RaycastHit hitInfo, dist, targetMask))
-         {
-            if (hitInfo.transform == potential)
+            // Check if obstacle blocks view
+            if (!Physics.Raycast(origin, dir.normalized, dist, obstacleMask))
             {
-               validTargets.Add(potential);
+                // Check if target is directly visible
+                if (Physics.Raycast(origin, dir.normalized, out RaycastHit hitInfo, dist, targetMask))
+                {
+                    if (hitInfo.transform.root == potential.root)
+                    {
+                        validTargets.Add(potential);
+                    }
+                }
             }
-         }
-      }
+        }
 
-      validTargets.Sort((a, b) =>
-      {
-         Vector3 dirA = (a.position - transform.position).normalized;
-         Vector3 dirB = (b.position - transform.position).normalized;
-         float angleA = Vector3.Angle(transform.forward, dirA);
-         float angleB = Vector3.Angle(transform.forward, dirB);
-         return angleA.CompareTo(angleB);
-      });
+        // Sort by angle to prioritize in-front targets
+        validTargets.Sort((a, b) =>
+        {
+            Vector3 dirA = (a.position - transform.position).normalized;
+            Vector3 dirB = (b.position - transform.position).normalized;
+            float angleA = Vector3.Angle(transform.forward, dirA);
+            float angleB = Vector3.Angle(transform.forward, dirB);
+            return angleA.CompareTo(angleB);
+        });
 
-      Debug.Log($"[LockOn] Valid targets after LOS: {validTargets.Count}");
-   }
+        Debug.Log($"[LockOn] Valid targets after LOS: {validTargets.Count}");
+    }
 
-   private void OnDrawGizmosSelected()
-   {
-      Gizmos.color = Color.yellow;
-      Gizmos.DrawWireSphere(transform.position, lockOnRange);
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, lockOnRange);
 
-      if (currentTarget != null)
-      {
-         Gizmos.color = Color.red;
-         Gizmos.DrawWireCube(currentTarget.transform.position, Vector3.one);
-      }
-   }
-
+        if (currentTarget != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireCube(currentTarget.position, Vector3.one);
+        }
+    }
 }
