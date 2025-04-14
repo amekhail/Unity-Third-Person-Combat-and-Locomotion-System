@@ -29,6 +29,14 @@ public class LocomotionState : ParentStateWithChildren
     {
         base.LogicUpdate();
         
+        if (Context.playerInputHandler.IsLightAttackPressed)
+        {
+            Debug.Log("Entering CombatState");
+            Context.playerInputHandler.ResetLightAttack();
+            StateMachine.ChangeState(new CombatState(Context, StateMachine));
+            return;
+        }
+        
         HandleLockRotation();
         UpdateSubStateIfNeeded();
     }

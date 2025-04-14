@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class CombatState : CharacterState
+public class CombatState : ParentStateWithChildren
 {
    private float _combatTimer = 0f;
    private const float COMBAT_TIMEOUT = 5f;
@@ -14,7 +14,9 @@ public class CombatState : CharacterState
    {
       base.Enter();
       Debug.Log("Enter CombatState");
-      StateMachine.ChangeState(new CombatLocomotionState(Context, StateMachine));
+      Context.animator.SetTrigger("Unsheathe");
+      
+      SetSubState(new CombatLocomotionState(Context, StateMachine));
    }
 
    public override void LogicUpdate()
@@ -30,8 +32,13 @@ public class CombatState : CharacterState
       if (_combatTimer > COMBAT_TIMEOUT)
       {
          Debug.Log("Exiting CombatState");
+         Context.animator.SetTrigger("Sheathe");
          StateMachine.ChangeState(new LocomotionState(Context, StateMachine));
-         // TODO: Add auto sheathing weapon
+      }
+      
+      if (Context.playerInputHandler.IsLightAttackPressed)
+      {
+         StateMachine.ChangeState(new LightAttackState(Context, StateMachine));
       }
    }
 

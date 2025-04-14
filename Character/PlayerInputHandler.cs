@@ -1,6 +1,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerInputHandler : MonoBehaviour
 {
@@ -10,6 +11,11 @@ public class PlayerInputHandler : MonoBehaviour
     public Vector2 LookInput {get; private set;}
     public bool IsRunning {get; private set;}
     public bool IsLockOnPressed {get; private set;}
+
+    public bool IsLightAttackPressed => _isLightAttackPressed;
+    private bool _isLightAttackPressed;
+    
+    public bool IsSheathePressed {get; private set;}
     
 
     private void Awake()
@@ -31,6 +37,41 @@ public class PlayerInputHandler : MonoBehaviour
         // Camera Look
         _controls.Player.Look.performed += ctx => LookInput = ctx.ReadValue<Vector2>();
         _controls.Player.Look.canceled += _ => LookInput = Vector2.zero;
+        
+        // Attack
+        _controls.Player.LeftClick.performed += OnLightAttack;
+        
+        // Sheathing
+        _controls.Player.Sheath.performed += OnSheath;
+
+
+
+    }
+
+    public void OnLightAttack(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            _isLightAttackPressed = true;
+        }
+    }
+
+    public void ResetLightAttack()
+    {
+        _isLightAttackPressed = false;
+    }
+
+    public void OnSheath(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            IsSheathePressed = true;
+        }
+    }
+
+    public void ResetSheathe()
+    {
+        IsSheathePressed = false;
     }
 
     private void OnDisable() => _controls.Disable();
