@@ -12,8 +12,8 @@ public class CharacterContext : MonoBehaviour
     public Animator animator;
     public CharacterController characterController;
     
-    [Header("Combat Settings")]
-    public LayerMask enemyLayerMask;
+    [Header("Combat Reference")]
+    public CombatController combatController;
    
     public CharacterStateMachine CharacterStateMachine;
 
@@ -43,6 +43,7 @@ public class CharacterContext : MonoBehaviour
         CharacterStateMachine = new CharacterStateMachine();
         characterController = GetComponent<CharacterController>();
         lockOnSystem = GetComponent<LockOnSystem>();
+        combatController = GetComponent<CombatController>();
         
 
         if (playerInputHandler == null)

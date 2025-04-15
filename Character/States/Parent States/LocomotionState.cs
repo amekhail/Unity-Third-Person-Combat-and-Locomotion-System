@@ -28,13 +28,11 @@ public class LocomotionState : ParentStateWithChildren
     public override void LogicUpdate()
     {
         base.LogicUpdate();
-        
+
         if (Context.playerInputHandler.IsLightAttackPressed)
         {
-            Debug.Log("Entering CombatState");
             Context.playerInputHandler.ResetLightAttack();
-            StateMachine.ChangeState(new CombatState(Context, StateMachine));
-            return;
+            Context.combatController?.TryAttack();
         }
         
         HandleLockRotation();
