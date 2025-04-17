@@ -20,6 +20,7 @@ public class IdleState : CharacterState
 
     public override void LogicUpdate()
     {
+        
         DampToIdle();
         // TODO: Implement breathing animations, turn-in-place animations
         

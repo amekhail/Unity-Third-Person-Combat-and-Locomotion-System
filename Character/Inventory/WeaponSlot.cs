@@ -1,24 +1,36 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class WeaponSlot : MonoBehaviour
-{ 
-    public WeaponData equippedWeapon;
+{
+    public GameObject currentWeaponModel;
+    public SlotType slotType;
 
-    public void EquipWeapon(WeaponData newWeapon)
+    public void UnloadWeaponModel()
     {
-        equippedWeapon = newWeapon;
-
-        if (newWeapon.weaponPrefab != null)
+        if (currentWeaponModel)
         {
-            Instantiate(newWeapon.weaponPrefab, transform);
+            Destroy(currentWeaponModel);
         }
-
-        var combat = GetComponent<CombatController>();
-        if (combat != null)
-        {
-            combat.currentWeaponAnimations = newWeapon.animationSet;
-        }
-
     }
+
+    public void LoadWeaponModel(GameObject weaponModel)
+    {
+        currentWeaponModel = weaponModel;
+        weaponModel.transform.parent = transform;
         
+        weaponModel.transform.localPosition = Vector3.zero;
+        weaponModel.transform.localRotation = Quaternion.identity;
+    }
+    
+}
+
+/// <summary>
+/// A simple slot enum to determine which slot the weapon will go on
+/// </summary>
+public enum SlotType
+{
+    RightHand,  // Primary weapon slot
+    LeftHand,   // Possibly for a shield. I doubt that I want to add dual wielding weapons into this system
+    BackSlot,   // For shield or for large weapons? Bows?
+    HipSlot     // For swords and other weapons
 }

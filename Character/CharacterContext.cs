@@ -11,9 +11,8 @@ public class CharacterContext : MonoBehaviour
     public LockOnSystem lockOnSystem;
     public Animator animator;
     public CharacterController characterController;
+    public PlayerInventoryManager playerInventoryManager;
     
-    [Header("Combat Reference")]
-    public CombatController combatController;
    
     public CharacterStateMachine CharacterStateMachine;
 
@@ -42,8 +41,8 @@ public class CharacterContext : MonoBehaviour
     {
         CharacterStateMachine = new CharacterStateMachine();
         characterController = GetComponent<CharacterController>();
+        playerInventoryManager = GetComponent<PlayerInventoryManager>();
         lockOnSystem = GetComponent<LockOnSystem>();
-        combatController = GetComponent<CombatController>();
         
 
         if (playerInputHandler == null)

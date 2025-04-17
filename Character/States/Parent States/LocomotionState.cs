@@ -29,10 +29,10 @@ public class LocomotionState : ParentStateWithChildren
     {
         base.LogicUpdate();
 
-        if (Context.playerInputHandler.IsLightAttackPressed)
+        if (Context.playerInputHandler.IsRollPressed)
         {
-            Context.playerInputHandler.ResetLightAttack();
-            Context.combatController?.TryAttack();
+            Context.playerInputHandler.ResetRoll();
+            StateMachine.ChangeState(new RolleState(Context, StateMachine));
         }
         
         HandleLockRotation();

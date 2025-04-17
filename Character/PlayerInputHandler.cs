@@ -14,6 +14,9 @@ public class PlayerInputHandler : MonoBehaviour
 
     public bool IsLightAttackPressed => _isLightAttackPressed;
     private bool _isLightAttackPressed;
+
+    public bool IsRollPressed => _isRollPressed;
+    private bool _isRollPressed;
     
     public bool IsSheathePressed {get; private set;}
     
@@ -29,6 +32,9 @@ public class PlayerInputHandler : MonoBehaviour
         // Running
         _controls.Player.Run.performed += ctx => IsRunning = true;
         _controls.Player.Run.canceled += _ => IsRunning = false;
+        
+        // Rolling
+        _controls.Player.Roll.performed += OnRoll;
         
         //Lock-on
         _controls.Player.LockOn.performed += ctx => IsLockOnPressed = true;
@@ -72,6 +78,19 @@ public class PlayerInputHandler : MonoBehaviour
     public void ResetSheathe()
     {
         IsSheathePressed = false;
+    }
+
+    public void OnRoll(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            _isRollPressed = true;
+        }
+    }
+
+    public void ResetRoll()
+    {
+        _isRollPressed = false;
     }
 
     private void OnDisable() => _controls.Disable();
