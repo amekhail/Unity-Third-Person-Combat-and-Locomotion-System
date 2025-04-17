@@ -23,6 +23,7 @@ public class IdleState : CharacterState
         
         DampToIdle();
         // TODO: Implement breathing animations, turn-in-place animations
+        // TODO: 
         
     }
 
