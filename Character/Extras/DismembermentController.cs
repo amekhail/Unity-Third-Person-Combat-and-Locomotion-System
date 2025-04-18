@@ -1,7 +1,13 @@
-using System;
 using UnityEngine;
-using System.Collections.Generic;
 
+/// <summary>
+/// This class is specific for the Synty's Polygon Modular Fantasy Hero pack.
+/// Will make this more modular for different body parts.
+///
+/// This works by getting the objects attached to the specific points on character
+/// and making a static clone of the meshes at those locations while hiding the bones
+/// for dismemberment on the character. 
+/// </summary>
 public class DismembermentController : MonoBehaviour
 {
     [Header("Modular Parts (Skinned)")]
@@ -29,6 +35,7 @@ public class DismembermentController : MonoBehaviour
     [ContextMenu("Test Dismember Head")]
     public void DismemberHead()
     {
+        // TODO: If wearing a helmet, maybe sent the helmet flying off of the head
         if (head == null || detachSpawnPoint == null)
         {
             Debug.LogWarning("Missing head or detachSpawnPoint!");
@@ -76,7 +83,7 @@ public class DismembermentController : MonoBehaviour
         // 6. Auto-destroy
         Destroy(detachedRoot, destroyAfter);
     }
-
+    
     private void SpawnStaticVersion(GameObject originalSkinnedPart, Transform parent)
     {
         string staticName = originalSkinnedPart.name + "_Static";
