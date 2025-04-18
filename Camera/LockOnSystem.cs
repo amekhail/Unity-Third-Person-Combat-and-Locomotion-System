@@ -31,7 +31,7 @@ public class LockOnSystem : MonoBehaviour
                 if (!IsTargetValid(currentTarget))
                 {
                     Debug.Log($"[LockOn] Auto-unlocked from {currentTarget.name}");
-                    UnlockTarget();
+                    AttemptRelock();
                     return;
                 }
             }
@@ -42,6 +42,36 @@ public class LockOnSystem : MonoBehaviour
             {
                 targetIndicator.position = currentTarget.position + Vector3.up * 2f;
             }
+        }
+    }
+    
+    private void AttemptRelock()
+    {
+        RefreshValidTargets();
+
+        if (validTargets.Count > 0)
+        {
+            // If there are still valid targets, lock on to the first one (or the next one in the list)
+            if (_currentTargetIndex != -1 && _currentTargetIndex < validTargets.Count)
+            {
+                currentTarget = validTargets[_currentTargetIndex];
+            }
+            else
+            {
+                _currentTargetIndex = 0;
+                currentTarget = validTargets[_currentTargetIndex];
+            }
+
+            Debug.Log($"[LockOn] Relocked to {currentTarget.name}.");
+            if (targetIndicator != null)
+            {
+                targetIndicator.gameObject.SetActive(true);
+            }
+        }
+        else
+        {
+            Debug.Log("[LockOn] No valid targets found to relock onto.");
+            UnlockTarget();
         }
     }
     
