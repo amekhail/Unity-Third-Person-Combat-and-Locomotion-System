@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -12,10 +13,18 @@ public class DismembermentController : MonoBehaviour
     public string staticMeshPath = "Characters_ModularParts_Static"; // Relative to Resources/
 
     [Header("Physics Settings")]
-    public float throwForce = 3f;
+    public float throwForce = 6f;
     public float destroyAfter = 10f;
     public float drag = 3f;
     public float angularDrag = 2f;
+    
+    [Header("Debug")]
+    Animator animator;
+
+    private void Awake()
+    {
+        animator = GetComponent<Animator>();
+    }
 
     [ContextMenu("Test Dismember Head")]
     public void DismemberHead()
@@ -60,6 +69,9 @@ public class DismembermentController : MonoBehaviour
         col.center = new Vector3(0, 0, 0);
 
         rb.AddForce(transform.forward * throwForce + Vector3.up * 2f, ForceMode.Impulse);
+        
+        // TODO: Play BloodFX and sounds
+        animator.CrossFade("Die", 0.2f);
 
         // 6. Auto-destroy
         Destroy(detachedRoot, destroyAfter);
@@ -79,7 +91,7 @@ public class DismembermentController : MonoBehaviour
         GameObject instance = Instantiate(prefab, parent);
         instance.transform.localPosition = Vector3.zero;
         instance.transform.localRotation = Quaternion.identity;
-        instance.transform.localScale = Vector3.one * 0.01f; // Adjust as needed
+        instance.transform.localScale = Vector3.one * 0.01f;
     }
     
 }
