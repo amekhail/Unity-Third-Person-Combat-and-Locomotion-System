@@ -27,7 +27,7 @@ Walking -- Horizontal, Veritcal floats--> Animations2((8-way Animations))
 I am currently working on adding other features such as climbing, attacking, combos, dodging, falling, jumping, and taking damage so any other animations will be added in the future with the usage here.
 
 ## Known Issues
-1. When using the lock on system, you can still target targets behind walls
+1. New release of my current project broke on my website. :(
 
 ## Upcoming features and changes
 1. Updating the movement system to be camera relative locomotion
