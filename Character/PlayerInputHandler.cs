@@ -95,7 +95,6 @@ public class PlayerInputHandler : MonoBehaviour
 
     private void OnDisable() => _controls.Disable();
     private void OnEnable() => _controls.Enable();
-
     public void ResetLockOn()
     {
         IsLockOnPressed = false;

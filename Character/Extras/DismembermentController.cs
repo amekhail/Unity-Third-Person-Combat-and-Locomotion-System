@@ -3,115 +3,83 @@ using System.Collections.Generic;
 
 public class DismembermentController : MonoBehaviour
 {
-    [Header("Modular Parts")]
-    public Transform head;
-    public Transform headCoveringsRoot;
-    public Transform hairRoot;
-    public Transform headAttachmentRoot;
-    public Transform eyebrowsRoot;
-    public Transform facialHairRoot;
+    [Header("Modular Parts (Skinned)")]
+    public GameObject head;                     // e.g. head_04
+    public GameObject[] accessories;            // e.g. eyebrows, beard, helmet
 
-    [Header("Runtime Data")]
-    private List<GameObject> activeHeadParts = new List<GameObject>();
-    public Transform headDetachSpawnPoint;
+    [Header("Detach Settings")]
+    public Transform detachSpawnPoint;          // Where to spawn the detached version
+    public string staticMeshPath = "Characters_ModularParts_Static"; // Relative to Resources/
 
     [Header("Physics Settings")]
     public float throwForce = 3f;
     public float destroyAfter = 10f;
+    public float drag = 3f;
+    public float angularDrag = 2f;
 
     [ContextMenu("Test Dismember Head")]
     public void DismemberHead()
     {
-        if (head == null || headDetachSpawnPoint == null)
+        if (head == null || detachSpawnPoint == null)
         {
-            Debug.LogWarning("Missing head or spawn point!");
+            Debug.LogWarning("Missing head or detachSpawnPoint!");
             return;
         }
 
-        // 1. Find all active parts
-        activeHeadParts.Clear();
-        AddIfActive(head.gameObject);
-        FindAndAddActiveChild(headCoveringsRoot);
-        FindAndAddActiveChild(hairRoot);
-        FindAndAddActiveChild(headAttachmentRoot);
-        FindAndAddActiveChild(eyebrowsRoot);
-        FindAndAddActiveChild(facialHairRoot);
-
-        // 2. Disable original parts
-        foreach (var part in activeHeadParts)
+        // 1. Disable original parts
+        head.SetActive(false);
+        foreach (var accessory in accessories)
         {
-            part.SetActive(false);
+            if (accessory != null)
+                accessory.SetActive(false);
         }
 
-        // 3. Create detached root object.
+        // 2. Create the root object
         GameObject detachedRoot = new GameObject("DetachedHead");
-        detachedRoot.transform.position = headDetachSpawnPoint.position;
-        detachedRoot.transform.rotation = headDetachSpawnPoint.rotation;
+        detachedRoot.transform.position = detachSpawnPoint.position;
+        detachedRoot.transform.rotation = detachSpawnPoint.rotation;
 
-        // 4. Bake and clone each part
-        foreach (var part in activeHeadParts)
+        // 3. Add static head
+        SpawnStaticVersion(head, detachedRoot.transform);
+
+        // 4. Add static accessories
+        foreach (var acc in accessories)
         {
-            GameObject baked = new GameObject(part.name + "_Baked");
-            baked.transform.parent = detachedRoot.transform;
-            baked.transform.position = part.transform.position;
-            baked.transform.rotation = part.transform.rotation;
-            baked.transform.localScale = part.transform.localScale;
-
-            ConvertSkinnedMeshToMeshRenderer(part, baked);
+            if (acc != null)
+                SpawnStaticVersion(acc, detachedRoot.transform);
         }
 
         // 5. Add physics
         Rigidbody rb = detachedRoot.AddComponent<Rigidbody>();
+        rb.linearDamping = drag;
+        rb.angularDamping = angularDrag;
+
         CapsuleCollider col = detachedRoot.AddComponent<CapsuleCollider>();
         col.radius = 0.2f;
         col.height = 0.4f;
+        col.center = new Vector3(0, 0, 0);
 
         rb.AddForce(transform.forward * throwForce + Vector3.up * 2f, ForceMode.Impulse);
 
-        // 6. Auto-cleanup
+        // 6. Auto-destroy
         Destroy(detachedRoot, destroyAfter);
     }
 
-    private void AddIfActive(GameObject obj)
+    private void SpawnStaticVersion(GameObject originalSkinnedPart, Transform parent)
     {
-        if (obj != null && obj.activeInHierarchy)
-        {
-            activeHeadParts.Add(obj);
-        }
-    }
+        string staticName = originalSkinnedPart.name + "_Static";
+        GameObject prefab = Resources.Load<GameObject>($"{staticMeshPath}/{staticName}");
 
-    private void FindAndAddActiveChild(Transform categoryRoot)
-    {
-        if (categoryRoot == null) return;
-
-        foreach (Transform child in categoryRoot)
+        if (prefab == null)
         {
-            if (child.gameObject.activeSelf)
-            {
-                activeHeadParts.Add(child.gameObject);
-                break; // Only one active per group
-            }
-        }
-    }
-
-    private void ConvertSkinnedMeshToMeshRenderer(GameObject source, GameObject target)
-    {
-        var skinned = source.GetComponent<SkinnedMeshRenderer>();
-        if (skinned == null)
-        {
-            Debug.LogWarning($"No SkinnedMeshRenderer found on {source.name}");
+            Debug.LogWarning($"[Dismemberment] Static prefab not found for {staticName} in Resources/{staticMeshPath}");
             return;
         }
 
-        // Bake the mesh
-        Mesh bakedMesh = new Mesh();
-        skinned.BakeMesh(bakedMesh);
-
-        // Apply to MeshRenderer
-        var filter = target.AddComponent<MeshFilter>();
-        filter.sharedMesh = bakedMesh;
-
-        var renderer = target.AddComponent<MeshRenderer>();
-        renderer.sharedMaterials = skinned.sharedMaterials;
+        GameObject instance = Instantiate(prefab, parent);
+        instance.transform.localPosition = Vector3.zero;
+        instance.transform.localRotation = Quaternion.identity;
+        instance.transform.localScale = Vector3.one * 0.01f; // Adjust as needed
     }
+    
 }
